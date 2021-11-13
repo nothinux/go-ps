@@ -211,6 +211,8 @@ func parseStatusFile(status map[string]string) Process {
 			p.Pgrp = toInt(v)
 		case k == "Uid":
 			p.UID = toInt(v)
+		case k == "Gid":
+			p.GID = toInt(v)
 		default:
 		}
 	}
