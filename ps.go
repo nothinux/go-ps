@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -27,6 +28,8 @@ type Process struct {
 	Ppid int
 	//  The process group id from this process
 	Pgrp int
+	UID  int
+	GID  int
 }
 
 // ProcessIsExists return true if given process name is exists
@@ -180,6 +183,55 @@ func readStatsfile(pid int) ([]string, error) {
 	field := strings.Split(string(f), " ")
 
 	return field, nil
+}
+
+var statRX = regexp.MustCompile(`(\w.+):\s+(.+)`)
+
+// TODO read all information from /proc/$/status file
+func readStatusfile(pid int) (map[string]string, error) {
+	fname := fmt.Sprintf("/proc/%d/status", pid)
+
+	f, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	field := strings.Split(string(f), "\n")
+	var status = map[string]string{}
+	// format
+	for _, f := range field {
+		if statRX.Match([]byte(f)) {
+			st := statRX.FindStringSubmatch(f)
+			status[st[1]] = st[2]
+		}
+	}
+
+	return status, nil
+}
+
+func parseStatusFile(status map[string]string) (Process, error) {
+	var p Process
+
+	for k, v := range status {
+		switch {
+		case k == "Name":
+			p.Comm = v
+		case k == "State":
+			s := strings.Split(v, " ")
+			p.State = s[0]
+		case k == "Pid":
+			p.Pid = toInt(v)
+		case k == "PPid":
+			p.Ppid = toInt(v)
+		case k == "Tgid":
+			p.Pgrp = toInt(v)
+		case k == "Uid":
+			p.UID = toInt(v)
+		default:
+		}
+	}
+
+	return p, nil
 }
 
 // StateToString returns state representation for given state
