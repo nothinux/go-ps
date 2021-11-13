@@ -1,54 +1,127 @@
+//go:build linux
+// +build linux
+
 package ps
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 )
 
+var (
+	ErrNoProcess = errors.New("no process with provided name found")
+)
+
+// Process contains information about running process
 type Process struct {
-	Pid  int
+	// The process id
+	Pid int
+	// The executable filename of running process
 	Comm string
+	// state of this process
+	State string
+	// The parent process id from this process
 	Ppid int
+	//  The process group id from this process
 	Pgrp int
 }
 
-// FindPpid return parent process id of provided process name
+// ProcessIsExists return true if given process name is exists
+func ProcessIsExists(name string) (bool, error) {
+	_, err := FindProcess(name)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// ProcessIsExists return true if given pid is exists
+func PidIsExists(pid int) (bool, error) {
+	_, err := FindProcessFromPid(pid)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// GetPidState returns state for given process id
+func GetPidState(pid int) (string, error) {
+	proc, err := FindProcessFromPid(pid)
+	if err != nil {
+		return "", err
+	}
+
+	return StateToString(proc.State), nil
+}
+
+// FindPpid returns parent process id from given process name
 func FindPpid(name string) (int, error) {
-	procs, err := GetProcess()
+	procs, err := FindProcess(name)
 	if err != nil {
 		return 0, err
 	}
 
-	for _, proc := range procs {
-		if proc.Comm == fmt.Sprintf("(%s)", name) {
-			// retuen parrent process id
-			return proc.Ppid, nil
-		}
-	}
-
-	return 0, fmt.Errorf("no process with provided name found")
+	return procs.Ppid, nil
 }
 
-// Findpid return process id of provided process name
-func Findpid(name string) (int, error) {
-	procs, err := GetProcess()
+// FindPid returns process id from given process name
+func FindPid(name string) (int, error) {
+	proc, err := FindProcess(name)
+	if err != nil {
+		return 0, err
+	}
+	return proc.Pid, nil
+}
+
+// FindPGid returns process group id from given process name
+func FindPGid(name string) (int, error) {
+	proc, err := FindProcess(name)
 	if err != nil {
 		return 0, err
 	}
 
+	return proc.Pgrp, nil
+}
+
+// FindProcessFromPid return Process struct from given process id
+func FindProcessFromPid(pid int) (Process, error) {
+	procs, err := GetProcess()
+	if err != nil {
+		return Process{}, err
+	}
+
 	for _, proc := range procs {
-		if proc.Comm == fmt.Sprintf("(%s)", name) {
-			// retuen parrent process id
-			return proc.Pid, nil
+		if proc.Pid == pid {
+			return proc, nil
 		}
 	}
 
-	return 0, fmt.Errorf("no process with provided name found")
+	return Process{}, ErrNoProcess
 }
 
-// GetProcess get all process information pid, comm, ppid, pgrp
+// FindProcess return Process struct from given process name,
+// it will be match if given process name same with executable filename
+func FindProcess(name string) (Process, error) {
+	procs, err := GetProcess()
+	if err != nil {
+		return Process{}, err
+	}
+
+	for _, proc := range procs {
+		if proc.Comm == fmt.Sprintf("(%s)", name) {
+			return proc, nil
+		}
+	}
+
+	return Process{}, ErrNoProcess
+}
+
+// GetProcess returns all process information pid, comm, ppid, pgrp
 func GetProcess() ([]Process, error) {
 	var procs []Process
 
@@ -64,17 +137,18 @@ func GetProcess() ([]Process, error) {
 		}
 
 		procs = append(procs, Process{
-			Pid:  toInt(stat[0]),
-			Comm: stat[1],
-			Ppid: toInt(stat[3]),
-			Pgrp: toInt(stat[4]),
+			Pid:   toInt(stat[0]),
+			Comm:  stat[1],
+			State: stat[2],
+			Ppid:  toInt(stat[3]),
+			Pgrp:  toInt(stat[4]),
 		})
 	}
 
 	return procs, nil
 }
 
-// GetPids get all pid from /proc file
+// GetPids returns a slice of process ID
 func GetPids() ([]int, error) {
 	var pids []int
 
@@ -106,6 +180,26 @@ func readStatsfile(pid int) ([]string, error) {
 	field := strings.Split(string(f), " ")
 
 	return field, nil
+}
+
+// StateToString returns state representation for given state
+func StateToString(state string) string {
+	// https://man7.org/linux/man-pages/man5/proc.5.html
+	states := map[string]string{
+		"R": "Running",
+		"S": "Sleeping",
+		"D": "Waiting",
+		"Z": "Zombie",
+		"T": "Stopped",
+		"t": "Tracing stop",
+		"X": "Dead",
+		"x": "Dead",
+		"K": "Wakekill",
+		"W": "Waking",
+		"P": "Parked",
+	}
+
+	return states[state]
 }
 
 func toInt(s string) int {
