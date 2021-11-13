@@ -1,20 +1,32 @@
 package ps
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 )
 
+var (
+	ErrNoProcess = errors.New("no process with provided name found")
+)
+
+// Process contains information about running process
 type Process struct {
-	Pid  int
+	// The process id
+	Pid int
+	// The executable filename of running process
 	Comm string
+	// state of this process
+	State string
+	// The parent process id from this process
 	Ppid int
+	//  The process group id from this process
 	Pgrp int
 }
 
-// FindPpid return parent process id of provided process name
+// FindPpid returns parent process id of provided process name
 func FindPpid(name string) (int, error) {
 	procs, err := GetProcess()
 	if err != nil {
@@ -28,11 +40,11 @@ func FindPpid(name string) (int, error) {
 		}
 	}
 
-	return 0, fmt.Errorf("no process with provided name found")
+	return 0, ErrNoProcess
 }
 
-// Findpid return process id of provided process name
-func Findpid(name string) (int, error) {
+// FindPid returns process id of provided process name
+func FindPid(name string) (int, error) {
 	procs, err := GetProcess()
 	if err != nil {
 		return 0, err
@@ -45,10 +57,10 @@ func Findpid(name string) (int, error) {
 		}
 	}
 
-	return 0, fmt.Errorf("no process with provided name found")
+	return 0, ErrNoProcess
 }
 
-// GetProcess get all process information pid, comm, ppid, pgrp
+// GetProcess returns all process information pid, comm, ppid, pgrp
 func GetProcess() ([]Process, error) {
 	var procs []Process
 
@@ -64,17 +76,18 @@ func GetProcess() ([]Process, error) {
 		}
 
 		procs = append(procs, Process{
-			Pid:  toInt(stat[0]),
-			Comm: stat[1],
-			Ppid: toInt(stat[3]),
-			Pgrp: toInt(stat[4]),
+			Pid:   toInt(stat[0]),
+			Comm:  stat[1],
+			State: stat[2],
+			Ppid:  toInt(stat[3]),
+			Pgrp:  toInt(stat[4]),
 		})
 	}
 
 	return procs, nil
 }
 
-// GetPids get all pid from /proc file
+// GetPids returns a slice of process ID
 func GetPids() ([]int, error) {
 	var pids []int
 
@@ -106,6 +119,25 @@ func readStatsfile(pid int) ([]string, error) {
 	field := strings.Split(string(f), " ")
 
 	return field, nil
+}
+
+func stateString(state string) string {
+	// https://man7.org/linux/man-pages/man5/proc.5.html
+	states := map[string]string{
+		"R": "Running",
+		"S": "Sleeping",
+		"D": "Waiting",
+		"Z": "Zombie",
+		"T": "Stopped",
+		"t": "Tracing stop",
+		"X": "Dead",
+		"x": "Dead",
+		"K": "Wakekill",
+		"W": "Waking",
+		"P": "Parked",
+	}
+
+	return states[state]
 }
 
 func toInt(s string) int {
