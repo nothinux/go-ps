@@ -28,8 +28,8 @@ type Process struct {
 	Ppid int
 	//  The process group id from this process
 	Pgrp int
-	UID  int
-	GID  int
+	// The User id and group id who running process
+	UID, GID int
 }
 
 // ProcessIsExists return true if given process name is exists
@@ -91,7 +91,7 @@ func FindPGid(name string) (int, error) {
 	return proc.Pgrp, nil
 }
 
-// FindProcessFromPid return Process struct from given process id
+// FindProcessFromPid returns Process struct from given process id
 func FindProcessFromPid(pid int) (Process, error) {
 	procs, err := GetProcess()
 	if err != nil {
@@ -107,7 +107,7 @@ func FindProcessFromPid(pid int) (Process, error) {
 	return Process{}, ErrNoProcess
 }
 
-// FindProcess return Process struct from given process name,
+// FindProcess returns Process struct from given process name,
 // it will be match if given process name same with executable filename
 func FindProcess(name string) (Process, error) {
 	procs, err := GetProcess()
@@ -134,18 +134,14 @@ func GetProcess() ([]Process, error) {
 	}
 
 	for _, pid := range pids {
-		stat, err := readStatsfile(pid)
+		stat, err := readStatusfile(pid)
 		if err != nil {
 			return nil, err
 		}
 
-		procs = append(procs, Process{
-			Pid:   toInt(stat[0]),
-			Comm:  prettyName(stat[1]),
-			State: stat[2],
-			Ppid:  toInt(stat[3]),
-			Pgrp:  toInt(stat[4]),
-		})
+		p := parseStatusFile(stat)
+
+		procs = append(procs, p)
 	}
 
 	return procs, nil
@@ -172,22 +168,8 @@ func GetPids() ([]int, error) {
 	return pids, nil
 }
 
-func readStatsfile(pid int) ([]string, error) {
-	fname := fmt.Sprintf("/proc/%d/stat", pid)
-
-	f, err := ioutil.ReadFile(fname)
-	if err != nil {
-		return nil, err
-	}
-
-	field := strings.Split(string(f), " ")
-
-	return field, nil
-}
-
 var statRX = regexp.MustCompile(`(\w.+):\s+(.+)`)
 
-// TODO read all information from /proc/$/status file
 func readStatusfile(pid int) (map[string]string, error) {
 	fname := fmt.Sprintf("/proc/%d/status", pid)
 
@@ -209,9 +191,11 @@ func readStatusfile(pid int) (map[string]string, error) {
 	return status, nil
 }
 
-func parseStatusFile(status map[string]string) (Process, error) {
+// parseStatus file returns all information in Process
+func parseStatusFile(status map[string]string) Process {
 	var p Process
 
+	// TODO parse all information from /proc/$/status file
 	for k, v := range status {
 		switch {
 		case k == "Name":
@@ -231,7 +215,7 @@ func parseStatusFile(status map[string]string) (Process, error) {
 		}
 	}
 
-	return p, nil
+	return p
 }
 
 // StateToString returns state representation for given state

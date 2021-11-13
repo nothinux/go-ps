@@ -169,21 +169,6 @@ func TestGetPids(t *testing.T) {
 	}
 }
 
-func TestReadStatsFile(t *testing.T) {
-	stats, err := readStatsfile(1)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if stats[0] != "1" {
-		t.Fatalf("first element not pid 1")
-	}
-
-	if stats[1] != "(systemd)" {
-		t.Fatalf("second element not (systemd)")
-	}
-}
-
 func TestStateToString(t *testing.T) {
 	tests := []struct {
 		state  string
