@@ -113,7 +113,7 @@ func FindProcess(name string) (Process, error) {
 	}
 
 	for _, proc := range procs {
-		if proc.Comm == fmt.Sprintf("(%s)", name) {
+		if proc.Comm == name {
 			return proc, nil
 		}
 	}
@@ -138,7 +138,7 @@ func GetProcess() ([]Process, error) {
 
 		procs = append(procs, Process{
 			Pid:   toInt(stat[0]),
-			Comm:  stat[1],
+			Comm:  prettyName(stat[1]),
 			State: stat[2],
 			Ppid:  toInt(stat[3]),
 			Pgrp:  toInt(stat[4]),
@@ -200,6 +200,10 @@ func StateToString(state string) string {
 	}
 
 	return states[state]
+}
+
+func prettyName(s string) string {
+	return strings.Trim(s, "()")
 }
 
 func toInt(s string) int {
