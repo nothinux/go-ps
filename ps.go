@@ -252,10 +252,10 @@ func parseStatusFile(status map[string]string) Process {
 		case k == "Tgid":
 			p.Pgrp = toInt(v)
 		case k == "Uid":
-			s := strings.Split(v, " ")
+			s := strings.Split(v, "\t")
 			p.UID = toInt(s[0])
 		case k == "Gid":
-			s := strings.Split(v, " ")
+			s := strings.Split(v, "\t")
 			p.GID = toInt(s[0])
 		case k == "CmdLine":
 			p.CmdLine = v
