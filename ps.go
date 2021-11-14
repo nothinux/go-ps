@@ -111,7 +111,8 @@ func FindProcess(pid int) (Process, error) {
 }
 
 // FindProcessName returns Process based on finding,
-// it will be match if given process name same with executable filename
+// it will be match if given process name same with executable filename.
+// if there is more than one matching process it will only return the first match
 func FindProcessName(name string) (Process, error) {
 	procs, err := GetProcess()
 	if err != nil {
@@ -125,6 +126,39 @@ func FindProcessName(name string) (Process, error) {
 	}
 
 	return Process{}, ErrNoProcess
+}
+
+// FindProcessNameTree returns all process matching with the process name given.
+// suitable for process with child-process
+func FindProcessNameTree(name string) ([]Process, error) {
+	var p []Process
+	var pid, count int
+
+	procs, err := GetProcess()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, proc := range procs {
+		if proc.Comm == name {
+			// make sure every process have same parent id
+			// usually parent process is in the first position
+			if count == 0 {
+				pid = proc.Pid
+			}
+			if pid == proc.Pid || pid == proc.Ppid {
+				p = append(p, proc)
+			}
+			count++
+		}
+	}
+
+	// throw error if slice is nil
+	if len(p) == 0 {
+		return nil, ErrNoProcess
+	}
+
+	return p, nil
 }
 
 // FindProcessNameContains returns slice of Process based on finding,
