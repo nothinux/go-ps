@@ -7,6 +7,17 @@ import (
 
 // All tests in here only work on Environment with systemd as init
 
+func TestShowAllProcess(t *testing.T) {
+	procs, err := GetProcess()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, p := range procs {
+		t.Logf("procs name: %v \tprocs cmd: %v\n", p.Comm, p.CmdLine)
+	}
+}
+
 func TestProcessIsExists(t *testing.T) {
 	exists, err := ProcessIsExists("systemd")
 	if err != nil {
