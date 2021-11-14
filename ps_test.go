@@ -8,13 +8,9 @@ import (
 // All tests in here only work on Environment with systemd as init
 
 func TestShowAllProcess(t *testing.T) {
-	procs, err := GetProcess()
+	_, err := GetProcess()
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	for _, p := range procs {
-		t.Logf("procs name: %v \tprocs cmd: %v\n", p.Comm, p.CmdLine)
 	}
 }
 
@@ -165,7 +161,7 @@ func TestProcessNameTree(t *testing.T) {
 	// make sure last element have expected parent id by compare it with pid
 	// from parent process
 	if ps[len(ps)-1].Ppid != ps[0].Pid {
-		t.Fatalf("child parent id not same with parent process id")
+		t.Fatalf("child parent id %v not same with parent process id %v", ps[len(ps)-1], ps[0].Pid)
 	}
 }
 
@@ -178,7 +174,7 @@ func TestProcessTree(t *testing.T) {
 	// make sure last element have expected parent id by compare it with pid
 	// from parent process
 	if ps[len(ps)-1].Ppid != ps[0].Pid {
-		t.Fatalf("child parent id not same with parent process id")
+		t.Fatalf("child parent id %v not same with parent process id %v", ps[len(ps)-1], ps[0].Pid)
 	}
 }
 
