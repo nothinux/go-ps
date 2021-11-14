@@ -18,6 +18,7 @@ package main
 
 import (
     "log"
+    "fmt"
     "github.com/nothinux/go-ps"
 )
 
@@ -52,6 +53,31 @@ func main() {
     fmt.Println(pid)
 }
 ```
+
+#### Find Process then get information from that process
+``` go
+package main
+
+
+import (
+    "log"
+    "github.com/nothinux/go-ps"
+    "fmt"
+)
+
+func main() {
+    p, err := ps.FindProcessName("nginx")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("process id:", p.Pid)
+    fmt.Println("process name:", p.Comm)
+    fmt.Println("process cmd:", p.CmdLine)
+    fmt.PrintLn("process state:", p.State)
+
+}
+`` `
 
 [more](https://pkg.go.dev/github.com/nothinux/go-ps)
 
