@@ -74,7 +74,7 @@ func main() {
     fmt.Println("process id:", p.Pid)
     fmt.Println("process name:", p.Comm)
     fmt.Println("process cmd:", p.CmdLine)
-    fmt.PrintLn("process state:", p.State)
+    fmt.Println("process state:", p.State)
 
 }
 `` `
