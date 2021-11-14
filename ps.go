@@ -128,6 +128,31 @@ func FindProcessName(name string) (Process, error) {
 	return Process{}, ErrNoProcess
 }
 
+// FindProcessTree returns all process matching with the parent process id given.
+// suitable for process with child-process
+func FindProcessTree(ppid int) ([]Process, error) {
+	var p []Process
+
+	procs, err := GetProcess()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, proc := range procs {
+		// make sure every process have same parent id
+		if proc.Ppid == ppid || proc.Pid == ppid {
+			p = append(p, proc)
+		}
+	}
+
+	// throw error if slice is nil
+	if len(p) == 0 {
+		return nil, ErrNoProcess
+	}
+
+	return p, nil
+}
+
 // FindProcessNameTree returns all process matching with the process name given.
 // suitable for process with child-process
 func FindProcessNameTree(name string) ([]Process, error) {

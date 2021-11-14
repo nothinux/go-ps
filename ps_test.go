@@ -169,6 +169,19 @@ func TestProcessNameTree(t *testing.T) {
 	}
 }
 
+func TestProcessTree(t *testing.T) {
+	ps, err := FindProcessTree(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// make sure last element have expected parent id by compare it with pid
+	// from parent process
+	if ps[len(ps)-1].Ppid != ps[0].Pid {
+		t.Fatalf("child parent id not same with parent process id")
+	}
+}
+
 func TestGetProcess(t *testing.T) {
 	procs, err := GetProcess()
 	if err != nil {
