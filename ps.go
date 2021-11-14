@@ -14,6 +14,7 @@ import (
 
 var (
 	ErrNoProcess = errors.New("no process with provided name found")
+	statRX       = regexp.MustCompile(`(\w.+):\s+(.+)`)
 )
 
 // Process contains information about running process
@@ -22,6 +23,8 @@ type Process struct {
 	Pid int
 	// The executable filename of running process
 	Comm string
+	// Full command line of running process
+	CmdLine string
 	// state of this process
 	State string
 	// The parent process id from this process
@@ -107,7 +110,7 @@ func FindProcess(pid int) (Process, error) {
 	return Process{}, ErrNoProcess
 }
 
-// FindProcessName returns Process struct from given process name,
+// FindProcessName returns Process based on finding,
 // it will be match if given process name same with executable filename
 func FindProcessName(name string) (Process, error) {
 	procs, err := GetProcess()
@@ -124,6 +127,27 @@ func FindProcessName(name string) (Process, error) {
 	return Process{}, ErrNoProcess
 }
 
+// FindProcessNameContains returns slice of Process based on finding,
+// it will returns process containing name.
+// Using this is not very accurate, if you want to search process based on
+// executable file name, use FindProcessName instead
+func FindProcessNameContains(name string) ([]Process, error) {
+	var p []Process
+
+	procs, err := GetProcess()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, proc := range procs {
+		if strings.Contains(proc.CmdLine, name) {
+			p = append(p, proc)
+		}
+	}
+
+	return p, nil
+}
+
 // GetProcess returns all process information pid, comm, ppid, pgrp
 func GetProcess() ([]Process, error) {
 	var procs []Process
@@ -138,6 +162,15 @@ func GetProcess() ([]Process, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// read full command line for this process
+		cmdline, err := readCmdLine(pid)
+		if err != nil {
+			return nil, err
+		}
+
+		// add cmdline to map
+		stat["CmdLine"] = cmdline
 
 		p := parseStatusFile(stat)
 
@@ -168,8 +201,6 @@ func GetPids() ([]int, error) {
 	return pids, nil
 }
 
-var statRX = regexp.MustCompile(`(\w.+):\s+(.+)`)
-
 func readStatusfile(pid int) (map[string]string, error) {
 	fname := fmt.Sprintf("/proc/%d/status", pid)
 
@@ -189,6 +220,17 @@ func readStatusfile(pid int) (map[string]string, error) {
 	}
 
 	return status, nil
+}
+
+func readCmdLine(pid int) (string, error) {
+	name := fmt.Sprintf("/proc/%d/cmdline", pid)
+
+	cmd, err := ioutil.ReadFile(name)
+	if err != nil {
+		return "", err
+	}
+
+	return string(cmd), nil
 }
 
 // parseStatus file returns all information in Process
@@ -213,6 +255,8 @@ func parseStatusFile(status map[string]string) Process {
 			p.UID = toInt(v)
 		case k == "Gid":
 			p.GID = toInt(v)
+		case k == "CmdLine":
+			p.CmdLine = v
 		default:
 		}
 	}
