@@ -107,8 +107,8 @@ func TestFindPGid(t *testing.T) {
 	})
 }
 
-func TestFindProcessFromPid(t *testing.T) {
-	p, err := FindProcessFromPid(1)
+func TestFindProcess(t *testing.T) {
+	p, err := FindProcess(1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,8 +126,8 @@ func TestFindProcessFromPid(t *testing.T) {
 	}
 }
 
-func TestFindProcess(t *testing.T) {
-	p, err := FindProcess("systemd")
+func TestFindProcessName(t *testing.T) {
+	p, err := FindProcessName("systemd")
 	if err != nil {
 		t.Fatal(err)
 	}

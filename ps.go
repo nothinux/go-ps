@@ -34,7 +34,7 @@ type Process struct {
 
 // ProcessIsExists return true if given process name is exists
 func ProcessIsExists(name string) (bool, error) {
-	_, err := FindProcess(name)
+	_, err := FindProcessName(name)
 	if err != nil {
 		return false, err
 	}
@@ -44,7 +44,7 @@ func ProcessIsExists(name string) (bool, error) {
 
 // ProcessIsExists return true if given pid is exists
 func PidIsExists(pid int) (bool, error) {
-	_, err := FindProcessFromPid(pid)
+	_, err := FindProcess(pid)
 	if err != nil {
 		return false, err
 	}
@@ -54,7 +54,7 @@ func PidIsExists(pid int) (bool, error) {
 
 // GetPidState returns state for given process id
 func GetPidState(pid int) (string, error) {
-	proc, err := FindProcessFromPid(pid)
+	proc, err := FindProcess(pid)
 	if err != nil {
 		return "", err
 	}
@@ -64,7 +64,7 @@ func GetPidState(pid int) (string, error) {
 
 // FindPpid returns parent process id from given process name
 func FindPpid(name string) (int, error) {
-	procs, err := FindProcess(name)
+	procs, err := FindProcessName(name)
 	if err != nil {
 		return 0, err
 	}
@@ -74,7 +74,7 @@ func FindPpid(name string) (int, error) {
 
 // FindPid returns process id from given process name
 func FindPid(name string) (int, error) {
-	proc, err := FindProcess(name)
+	proc, err := FindProcessName(name)
 	if err != nil {
 		return 0, err
 	}
@@ -83,7 +83,7 @@ func FindPid(name string) (int, error) {
 
 // FindPGid returns process group id from given process name
 func FindPGid(name string) (int, error) {
-	proc, err := FindProcess(name)
+	proc, err := FindProcessName(name)
 	if err != nil {
 		return 0, err
 	}
@@ -91,8 +91,8 @@ func FindPGid(name string) (int, error) {
 	return proc.Pgrp, nil
 }
 
-// FindProcessFromPid returns Process struct from given process id
-func FindProcessFromPid(pid int) (Process, error) {
+// FindProcess returns Process struct from given process id
+func FindProcess(pid int) (Process, error) {
 	procs, err := GetProcess()
 	if err != nil {
 		return Process{}, err
@@ -107,9 +107,9 @@ func FindProcessFromPid(pid int) (Process, error) {
 	return Process{}, ErrNoProcess
 }
 
-// FindProcess returns Process struct from given process name,
+// FindProcessName returns Process struct from given process name,
 // it will be match if given process name same with executable filename
-func FindProcess(name string) (Process, error) {
+func FindProcessName(name string) (Process, error) {
 	procs, err := GetProcess()
 	if err != nil {
 		return Process{}, err
