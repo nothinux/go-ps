@@ -1,7 +1,7 @@
-# go-ps
-[![Go Report Card](https://goreportcard.com/badge/github.com/nothinux/go-ps)](https://goreportcard.com/report/github.com/nothinux/go-ps)  ![test status](https://github.com/nothinux/go-ps/actions/workflows/test.yml/badge.svg?branch=master)
+# 🐧 go-ps
+go-ps is process library for find, list, and get information from linux process. go-ps read information about process from `/proc` file.
 
-go-ps is process library for find, list, and get information from process. go-ps read information about process from `/proc` file.
+[![Go Report Card](https://goreportcard.com/badge/github.com/nothinux/go-ps)](https://goreportcard.com/report/github.com/nothinux/go-ps)  ![test status](https://github.com/nothinux/go-ps/actions/workflows/test.yml/badge.svg?branch=master)
 
 ## Documentation
 see [pkg.go.dev](https://pkg.go.dev/github.com/nothinux/go-ps)
